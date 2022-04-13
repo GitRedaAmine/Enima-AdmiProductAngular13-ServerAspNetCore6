@@ -1,0 +1,19 @@
+ 
+ 
+   
+ 
+      
+<mat-form-field appearance="fill">
+  <mat-label>select Brand</mat-label>
+  <mat-select  [(ngModel)]="brandUuid"
+  (ngModelChange)="onChangeSelection()">
+    <mat-option *ngFor="let elm of brands" [value]="elm.uuid">
+      {{elm.name}}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+
+ 
+
+
+ 

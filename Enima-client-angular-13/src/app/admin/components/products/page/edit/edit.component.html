@@ -1,0 +1,141 @@
+ 
+    <div  fxLayout="column" style="margin: 25px;"   >
+        <mat-toolbar  fxLayoutAlign="space-between center"  >
+
+          <button mat-mini-fab   
+ 
+            (click)="_onBackProduct()">
+            <mat-icon> arrow_back   </mat-icon>
+          </button> 
+
+            <button  *ngIf="isLoaded"  mat-button  color="accent" >Product ID : {{db_product.uuid}}</button>
+            <button mat-mini-fab    
+ 
+             aria-label="delete Product"  (click)="onUploadImagesClick()"  >
+                <mat-icon> save </mat-icon>
+            </button>
+        </mat-toolbar>
+  
+        <div fxLayout="row wrap"  *ngIf="isLoaded" fxLayoutAlign="space-around   center">
+          <div fxLayout="column"  style="margin: 25px;"     fxFlex="45">
+              <mat-toolbar  style="margin-top: 25px;"  fxLayoutAlign="space-around center"  >
+                <span>product images :</span>
+                <button mat-icon-button  color="primary" (click)="inputField.click()">
+                  <mat-icon>add_circle</mat-icon>
+                </button>
+                <input #inputField hidden type="file" (change)="onAddNewFile($event)" />
+              </mat-toolbar>
+              <div  fxLayout="row wrap" fxLayoutAlign="center center"    > 
+
+
+                
+
+                <div class="div_image" fxLayout="column" *ngFor="let elm of images"  >
+                 
+                  <img  *ngIf="!elm.isToDeleted"  class="imgEnima" alt="photo of {{elm.imageUrl.name}}" 
+                   src="{{   (elm.isChanged===true) || (elm.isNew===true)?elm.src: elm.imageUrl.url }}"   > 
+                
+                  <div  *ngIf="!elm.isToDeleted"   fxLayout="row wrap" fxLayoutAlign="space-around center" >
+                    <button mat-icon-button color="primary" (click)="inputField.click()">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <input #inputField hidden type="file" (change)="onEditImageClick($event, elm)" />
+                    <button mat-icon-button color="warn"  (click)="onDeleteImageClick( elm)"  >
+                      <mat-icon aria-label="Delete">delete_forever</mat-icon>
+                    </button>
+                  </div>
+                  <mat-progress-bar *ngIf="!elm.isToDeleted"      color="warn" [value]="elm.percentage"  ></mat-progress-bar>  
+                </div>  
+              </div>
+              <mat-toolbar *ngIf="edit.add.List" style="margin-top: 25px;"  fxLayoutAlign="space-around center"  >
+                <span>product New images :</span>
+              </mat-toolbar>
+              <div  fxLayout="row wrap" fxLayoutAlign="center center"    > 
+  
+                <div class="div_image" fxLayout="column" *ngFor="let elm of edit.add.List as IUploadInfo"  >
+                 
+                  <img    class="imgEnima" alt="photo of {{elm.imageUrl.name}}" 
+                   src="{{(elm.isUploadedToFirebase===false)?elm.src:elm.imageUrl.url }}"   > 
+                
+                  <mat-progress-bar *ngIf="(elm.isStartUploading ==true) && (elm.isUploadedToFirebase===false)"
+                  [mode]="elm.isUploaded==false?'determinate':'indeterminate' " 
+                   color="warn" 
+                   [value]="elm.percentage"  >{{elm.percentage}}</mat-progress-bar>  
+                   <p *ngIf="elm.msg"  fxLayoutAlign="space-around center"  style="font-size: small; color: brown; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;">{{elm.msg}}</p>
+                   <div  *ngIf="elm.isStartUploading" >
+                   <div [ngSwitch]="elm.state"  fxLayoutAlign="space-around center" >
+  
+                    <mat-icon *ngSwitchCase="this.UPLOADSTS.START_UPLOAD"           color="accent"> more_horiz   </mat-icon>
+                    <mat-icon *ngSwitchCase="this.UPLOADSTS.UPLOADED_WAIt_FIREBASE" color="accent"> style  </mat-icon>
+                    <mat-icon *ngSwitchCase="this.UPLOADSTS.UPLOADED_FIREBASE"      color="accent"> check </mat-icon>
+                    
+                  </div>
+                </div>
+                   
+                </div>  
+              </div>
+
+
+              <mat-toolbar *ngIf="edit.put.List" style="margin-top: 25px;"  fxLayoutAlign="space-around center"  >
+                <span>product update images :</span>
+              </mat-toolbar>
+              <div  fxLayout="row wrap" fxLayoutAlign="center center"    > 
+                <div class="div_image" fxLayout="column" *ngFor="let elm of edit.put.List as IUploadInfo"  >
+                  <img    class="imgEnima" alt="photo of {{elm.imageUrl.name}}" 
+                   src="{{(elm.isUploadedToFirebase===false)?elm.src:elm.imageUrl.url }}"   > 
+                
+                  <mat-progress-bar *ngIf="(elm.isStartUploading ==true) && (elm.isUploadedToFirebase===false)"
+                  [mode]="elm.isUploaded==false?'determinate':'indeterminate' " 
+                   color="warn" 
+                   [value]="elm.percentage"  >{{elm.percentage}}</mat-progress-bar>  
+                   <p *ngIf="elm.msg"  fxLayoutAlign="space-around center"  style="font-size: small; color: brown; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;">{{elm.msg}}</p>
+                   <div  *ngIf="elm.isStartUploading" >
+                   <div [ngSwitch]="elm.state"  fxLayoutAlign="space-around center" >
+  
+                    <mat-icon *ngSwitchCase="this.UPLOADSTS.START_UPLOAD"           color="accent"> more_horiz   </mat-icon>
+                    <mat-icon *ngSwitchCase="this.UPLOADSTS.UPLOADED_WAIt_FIREBASE" color="accent"> style  </mat-icon>
+                    <mat-icon *ngSwitchCase="this.UPLOADSTS.UPLOADED_FIREBASE"      color="accent"> check </mat-icon>
+                    
+                  </div>
+                </div>
+                   
+                </div>  
+              </div>
+
+          </div>
+          <div fxLayout="column"   style="margin: 25px;"     fxFlex="45">
+              <mat-toolbar  style="margin: 25px;"  >
+                <span>product informations :</span>
+              </mat-toolbar>
+         
+              <div  fxLayout="row wrap"  style="margin: 25px;"   >
+                <mat-form-field color="accent">
+                <input matInput placeholder="name"    [(ngModel)]="db_product.name" name="name">
+                <mat-icon matSuffix color="accent">business  </mat-icon>
+                </mat-form-field>
+                <mat-form-field color="accent">
+                  <input  matInput  type="number" #input   placeholder="price" [(ngModel)]="db_product.price" name="price" required > 
+                  <mat-icon matSuffix color="accent">monetization_on</mat-icon>
+                </mat-form-field>
+              </div>
+          
+              <div  fxLayout="row wrap" style="margin: 25px;"  >
+            
+                <mat-form-field color="accent" >
+                  <input  matInput  type="number" #inputstate    placeholder="stocks" [(ngModel)]="db_product.stocks" name="stocks"  required >
+                  <mat-icon matSuffix color="accent">archive  </mat-icon>
+                </mat-form-field>
+                <mat-form-field color="accent">
+                  <input matInput  type="number"   placeholder="rating" [(ngModel)]="db_product.rating" name="rating">
+                  <mat-icon matSuffix color="accent">stars   </mat-icon>
+                </mat-form-field>
+               </div>
+      
+               <div  fxLayout="row wrap" style="margin: 25px;"  >
+                <app-brands [brandId] ="db_product.brandId"   (BrandEvent)="onSelectBrand($event)"></app-brands>
+                <app-categories [catId] ="db_product.categorieId"    (CategorieEvent)="onSelectCategorie($event)"></app-categories>
+               </div>
+          </div>
+        </div>
+  </div>
+    

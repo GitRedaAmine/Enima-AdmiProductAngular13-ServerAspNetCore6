@@ -1,0 +1,91 @@
+
+ 
+ <div   fxFlexFill  >
+
+ 
+    <section fxLayout="column" fxLayoutAlign="center center"   >
+  
+      <button mat-icon-button    color="accent" matTooltip="reload products"   style="margin: 15px;"  (click)="reload()">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      
+      <div class="form" fxFlexFill  fxLayoutAlign="center center"  >
+        <mat-form-field floatPlaceholder="never" color="accent" style="width: 80%;"   >
+          <input matInput #filter placeholder="Filter products">
+        </mat-form-field>
+      </div>
+  
+  
+    </section     >
+      <section    fxLayoutAlign="center center" style="margin-top: 50px;"   >
+      <mat-table class="w-90 mat-elevation-z8"     [dataSource]="dataSource" matSort  >
+        <ng-container matColumnDef="uuid" >
+          <mat-header-cell [ngClass]="'Cell_W60'" *matHeaderCellDef mat-sort-header  >uuid</mat-header-cell>
+          <mat-cell *matCellDef="let row" [ngClass]="'Cell_W60'" >{{row.uuid}}</mat-cell>
+        </ng-container>
+  
+        <ng-container matColumnDef="Name">
+          <mat-header-cell   *matHeaderCellDef mat-sort-header>Name</mat-header-cell>
+          <mat-cell *matCellDef="let row"  > {{row.name}}</mat-cell>
+        </ng-container>
+    
+   
+        <ng-container matColumnDef="Price">
+          <mat-header-cell *matHeaderCellDef mat-sort-header>Price</mat-header-cell>
+          <mat-cell *matCellDef="let row"> {{row.price}}</mat-cell>
+        </ng-container>
+    
+        <ng-container matColumnDef="Stocks">
+          <mat-header-cell *matHeaderCellDef mat-sort-header>Stocks</mat-header-cell>
+          <mat-cell *matCellDef="let row"> {{row.stocks}}</mat-cell>
+        </ng-container>
+      
+   
+  
+  
+        <ng-container matColumnDef="Rating">
+          <mat-header-cell *matHeaderCellDef mat-sort-header>Rating</mat-header-cell>
+          <mat-cell *matCellDef="let row"> {{row.rating}}</mat-cell>
+        </ng-container>
+    
+          <!-- actions -->
+        <ng-container matColumnDef="Actions">
+          <mat-header-cell *matHeaderCellDef>
+            <button mat-icon-button color="primary"    (click)="add()">
+              <mat-icon matBadge="{{ getCount() }}" matBadgeSize="medium" matBadgeOverlap="false"   matBadgeColor="accent"  
+              aria-label="Example icon-button with a heart icon">library_add</mat-icon>
+            </button>
+          </mat-header-cell>
+    
+            <mat-cell *matCellDef="let row; let i=index;">
+            <button mat-icon-button color="accent" (click)="edit(row)">
+              <mat-icon aria-label="Edit">edit</mat-icon>
+            </button>
+    
+            <button mat-icon-button color="warn" (click)="del(row)">
+              <mat-icon aria-label="Delete">delete_forever</mat-icon>
+            </button>
+   
+          </mat-cell>  
+        </ng-container>
+      
+        <mat-header-row *matHeaderRowDef="displayedColumns" ></mat-header-row>
+        <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+      </mat-table>
+    </section>
+  
+   
+      <section fxLayoutAlign="center center" style="margin-top: 50px;">
+        <mat-paginator #paginator   
+                        [length]="dataSource.filteredData.length"
+                        [pageIndex]="0"
+                        [pageSize]="10"
+                        [pageSizeOptions]="[5, 10, 25, 100]">
+        </mat-paginator>
+      </section>
+  
+  
+  
+  
+  </div>
+   

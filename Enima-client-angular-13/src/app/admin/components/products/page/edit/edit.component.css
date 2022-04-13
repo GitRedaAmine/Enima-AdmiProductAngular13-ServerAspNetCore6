@@ -1,0 +1,35 @@
+.mat-form-field {
+   font-size: 14px;
+   flex-grow: 5;
+   margin: 10px;
+ }
+ 
+  
+ 
+ mat-divider {
+     display: block;
+     margin:5;
+     border-top-width: 1px;
+     border-top-style: solid;
+   }  
+
+   .imgEnima {
+     border: 1px solid #ddd;
+     border-radius: 5px;
+     margin: 10px;
+     padding: 5px;
+     width: 120px;
+     height: 120px;
+     object-fit: contain;
+   }
+ 
+
+.div_image {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin: 5px;
+
+}
+.div_image:hover {
+box-shadow: 0 0 2px 1px rgba(0, 140, 186, 0.5);
+}

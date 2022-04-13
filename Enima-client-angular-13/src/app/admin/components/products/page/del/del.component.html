@@ -1,0 +1,60 @@
+ 
+    <div  fxLayout="column" style="margin: 25px;"   >
+      <mat-toolbar  fxLayoutAlign="space-between center"  >
+        <button mat-mini-fab
+ 
+         (click)="_onBackProduct()">
+          <mat-icon> arrow_back   </mat-icon>
+        </button> 
+        
+          <button *ngIf="data!=null"  mat-button  color="accent" >Product ID : {{data.uuid}}</button>
+          <button mat-mini-fab (click)="onDeleteClick()"   
+ 
+          aria-label="delete Product"    >
+              <mat-icon> delete_forever </mat-icon>
+          </button>
+      </mat-toolbar>
+
+      <div fxLayout="row wrap"  fxLayoutAlign="space-around   center">
+
+        <div fxLayout="column"   *blockUI="'dropzoneBlockui'"  style="margin-top: 25px;"  fxFlex="45">
+            <mat-toolbar   fxLayoutAlign="space-around center"  >
+              <span>product images :</span>
+            </mat-toolbar>
+            <div  *ngIf="imagesProduct !=null"  fxLayout="row wrap" fxLayoutAlign="center center"    > 
+              <img   class="imgEnima"  *ngFor="let elm of imagesProduct"   alt="photo of {{elm.name}}"  src="{{elm.url}}"   >   
+            </div>
+        </div>
+
+        <div fxLayout="column" *ngIf="data!=null"   style="margin-top: 25px;"  fxFlex="45">
+            <mat-toolbar   >
+              <span>product informations :</span>
+            </mat-toolbar>
+       
+            <div  fxLayout="row wrap"    >
+              <mat-form-field color="accent">
+              <input matInput placeholder="name" disabled   [(ngModel)]="data.name" name="name">
+              <mat-icon matSuffix color="accent">business  </mat-icon>
+              </mat-form-field>
+              <mat-form-field color="accent">
+                <input  matInput  type="number" disabled  placeholder="price" [(ngModel)]="data.price" name="price" > 
+                <mat-icon matSuffix color="accent">monetization_on </mat-icon>
+              </mat-form-field>
+            </div>
+    
+            <div  fxLayout="row wrap"   >
+              <mat-form-field color="accent" >
+                <input  matInput  type="number" disabled  placeholder="stocks" [(ngModel)]="data.stocks" name="stocks"  >
+                <mat-icon matSuffix color="accent">archive  </mat-icon>
+              </mat-form-field>
+              <mat-form-field color="accent">
+                <input matInput  type="number"  disabled placeholder="rating" [(ngModel)]="data.rating" name="rating">
+                <mat-icon matSuffix color="accent">stars   </mat-icon>
+              </mat-form-field>
+            </div>
+ 
+          
+        </div>
+      </div>
+</div>
+  

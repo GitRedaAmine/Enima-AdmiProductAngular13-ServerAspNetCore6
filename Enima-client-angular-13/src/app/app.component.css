@@ -1,0 +1,25 @@
+  
+  .example-spacer {
+    flex: 1 1 auto;
+ 
+  }
+ 
+
+  .div_margin{
+    margin: 15px;
+  }
+
+  .resize {
+    width: 30px;  
+    height: 30px;
+}
+
+
+.example-footer {
+ 
+  border-radius: 15px;
+  margin-top: 5px;
+  height: 300px;
+  text-align: center;
+  
+}
