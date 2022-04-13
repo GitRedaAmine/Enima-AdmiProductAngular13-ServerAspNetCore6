@@ -2,7 +2,7 @@
 
 # Created by https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,angular,visualstudio
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,visualstudiocode,angular,visualstudio
-appsettings.json
+
 ### Angular ###
 ## Angular ##
 # compiled output
