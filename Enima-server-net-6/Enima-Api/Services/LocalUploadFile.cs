@@ -17,31 +17,76 @@ using System.IO;
 using System.Linq;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.StaticFiles;
-
+using Enima_Api.Models;
 
 namespace Enima_Api.Services
 {
     public class LocalUploadFile : IFileUploadService
     {
 
-        public async Task<string> UploadFileAsync( string Filesfolder, string fileName,  IFormFile file)
+        public async Task<UploadResp> UploadFileAsync( string Filesfolder, string fileName,  IFormFile file)
         {
-            var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), IFileUploadService.StaticFolder, Filesfolder);
-            if (!Directory.Exists(uploadsDir))
-                Directory.CreateDirectory(uploadsDir);
 
-            var path = Path.Combine(uploadsDir, fileName);
-           
-
-            using (var stream = new FileStream(path, FileMode.Create))
+            UploadResp FileUploadResp = new UploadResp();
+            if (file == null
+              || Filesfolder == string.Empty
+              || fileName == string.Empty)
             {
-                await file.CopyToAsync(stream);
+                FileUploadResp.status = false;
+                FileUploadResp.msg = "Error object data , check filename or foldername and IFormFile ";
+                return FileUploadResp;
             }
 
-            return path;
+            FileUploadResp.fileName = fileName;
+            FileUploadResp.folderName = Filesfolder;
+            try
+            {
+                var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), IFileUploadService.StaticFolder, Filesfolder);
+                if (!Directory.Exists(uploadsDir))
+                    Directory.CreateDirectory(uploadsDir);
+
+                var path = Path.Combine(uploadsDir, fileName);
+
+                using (var stream = new FileStream(path, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                    FileUploadResp.status = true;
+                    FileUploadResp.msg = " file : " + fileName + " is correctely uploaded in subdirectory ( " + Filesfolder + ")";
+
+                }
+            }
+            catch (Exception ex)
+            {
+                FileUploadResp.status = false;
+                FileUploadResp.msg = " error uploading file : " + fileName + " , exception : " + ex.Message;
+            }
+
+            
+
+            return FileUploadResp;
         }
 
-        public async  Task<string> UploadFileProgressAsync(  string Filesfolder, string fileName, IFormFile file)
+
+        public async Task<bool> DeleteFileAsync(string Filesfolder, string fileName)
+        {
+            throw new NotImplementedException();
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        public async Task<string> UploadFileProgressAsync(string Filesfolder, string fileName, IFormFile file)
         {
             string ret = String.Empty;
             var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), IFileUploadService.StaticFolder, Filesfolder);
@@ -50,10 +95,11 @@ namespace Enima_Api.Services
 
 
 
-            if (file.Length > 0) {
+            if (file.Length > 0)
+            {
 
 
-               // string fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
+                // string fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
 
                 var path = Path.Combine(uploadsDir, fileName);
 
@@ -63,15 +109,10 @@ namespace Enima_Api.Services
                 await file.CopyToAsync(stream);
                 await stream.FlushAsync();
 
-                ret =  "{folderStaticFile }/{folderName}/{fileName}"; 
+                ret = "{folderStaticFile }/{folderName}/{fileName}";
             }
-             
-           return ret;
-       }
 
-        public async Task<bool> DeleteFileAsync(string Filesfolder, string fileName)
-        {
-            throw new NotImplementedException();
+            return ret;
         }
     }
 }

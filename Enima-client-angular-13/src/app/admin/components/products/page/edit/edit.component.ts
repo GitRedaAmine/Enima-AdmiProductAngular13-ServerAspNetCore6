@@ -6,12 +6,12 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
  
  
 import { ToastrService } from 'ngx-toastr';
-import { Subject, tap } from 'rxjs';
-import { EnuUploadSts, IUpdateImage, IUploadInfo } from 'src/app/admin/models/admin.model';
+import { Observable, Subject, tap } from 'rxjs';
+import { EnuUploadSts, IUploadPut,  } from 'src/app/admin/models/admin.model';
  
 import { IBrand } from 'src/app/shared/models/api/ibrand.model';
 import { ICategorie } from 'src/app/shared/models/api/icategorie.model';
-import { IFileDelReq, IFileDelResp, IFileUploadReq, IFileUploadResp,  IImageUrl, IProduct } from 'src/app/shared/models/api/iproduct.model';
+import { IFileAddReq, IFileDelReq, IFileDelResp,    IFileUpdateReq,    IFileUploadResp,  IImageUrl, IProduct } from 'src/app/shared/models/api/iproduct.model';
 
  
 import { ImageUrlService } from 'src/app/shared/services/api/imageUrl.service';
@@ -19,23 +19,6 @@ import { ProductService } from 'src/app/shared/services/api/product.service';
 import { UploadService } from 'src/app/shared/services/api/upload.service';
  
 import * as uuid from 'uuid';
-
-
- 
-export interface IEditInfo
-{
-    Cntr  :number,
-    length:number,
-    List? :any[]  
- 
-}
-
-export interface IEditProduct
-{
-  add:IEditInfo,
-  put:IEditInfo,
-  del:IEditInfo,
-}
 
  
 @Component({
@@ -45,19 +28,23 @@ export interface IEditProduct
 })
 export class EditComponent implements OnInit {
   UPLOADSTS: typeof EnuUploadSts;
+  isProductEdited :boolean=false; 
+
+
   db_product: IProduct; 
-  images:IUpdateImage [] =[] ;
-  Obs_WaitUpdating?: Subject<any> = new Subject<any>();
- 
-  edit:IEditProduct ={ add :{Cntr:0, length:0},put :{Cntr:0, length:0},del :{Cntr:0, length:0} };
+  images:IUploadPut [] =[] ;
+
+  Notif_PutProduct:Subject<IProduct> = new Subject<IProduct>();
+  Notif_AddFile:Subject<IImageUrl> = new Subject<IImageUrl>();
+  Notif_DelFile:Subject<IImageUrl> = new Subject<IImageUrl>();
+
   uuid:string =""; 
   isLoaded:boolean =false; 
-  startIdxAddedFile=0;
 
   constructor( private route: ActivatedRoute, 
                 public router: Router ,
                 private HttpProduct: ProductService,
-                private HttpImageUrl: ImageUrlService,
+                private imgUrlService: ImageUrlService,
                 private uploadService: UploadService,
                 private _http: HttpClient,
                 private toastr: ToastrService ) 
@@ -65,244 +52,258 @@ export class EditComponent implements OnInit {
 
 ngOnInit(): void {
   this.UPLOADSTS = EnuUploadSts;
-  this.route.paramMap.subscribe((params: ParamMap) => {
-    this.uuid = params.get('uuid');
-    this.onLoad(this.uuid);
- })
+
+  this.route.paramMap
+      .subscribe((params: ParamMap) => {this.uuid = params.get('uuid');this.load(this.uuid) });
+
+  this.Notif_PutProduct.asObservable()
+      .subscribe(p =>{this.onNotif_PutProduct(p)});
+
+  this.Notif_AddFile.asObservable()
+      .subscribe(resp=>{ this.onNotif_AddFile(resp) });
+
+  this.Notif_DelFile.asObservable()
+      .subscribe(resp=>{ this.onNotif_DelFile(resp) });
 }
  
 _onBackProduct() {
   this.router.navigate(['admin/products'])
 }
-onSelectBrand(brand: IBrand) {
+_onSelectBrand(brand: IBrand) {
   this.db_product.brandId=brand.uuid;
 }
-onSelectCategorie(categorie: ICategorie) {
+_onSelectCategorie(categorie: ICategorie) {
   this.db_product.categorieId=categorie.uuid;
 }
 
  
-onLoad(uuid:string ) {
+load(uuid:string ) {
   console.log("onLoad ....." );
     this.HttpProduct.GetById(uuid) 
     .subscribe
     ((resp_p)=>
           {
             this.db_product = resp_p ;
-            let db_images: IImageUrl[] = [];
-            this.HttpImageUrl.getImagesByProductId(this.db_product.uuid).subscribe( resp_img => 
-             {
-                db_images= resp_img;
-                console.log( db_images)
+            this.imgUrlService.getImagesByProductId(this.db_product.uuid).subscribe( resp_img => {
+                let db_images: IImageUrl[] = resp_img;
+
                 db_images.forEach(elm=> {
-                      let image:IUpdateImage ={
-                        imageUrl: elm,
-                        isChanged: false,
-                        isNew: false,
-                        isToDeleted: false,
-                        isFromProduct: true,
-                        src: elm.url,
-                        file: undefined
+                      let image:IUploadPut ={
+                        src: elm.url, uuid: elm.uuid, name: elm.name, isChanged: false, isNew: false, isToDeleted: false, isFromProduct: true,
+                        file: undefined, isUploadedToFirebase: false, isUploaded: false, isStartUploading: false, state: EnuUploadSts.WAIT_START,
+                        id:  this.images.length +1,
                       };
                       this.images.push(image);
-                  })  
-                  console.log( this.images)
-             }) 
-             this.isLoaded=true;
-          },
-        (err) =>
-        {
+                  }) 
+                }) 
+             this.isLoaded=true}
+        ,(err) => {
+          this.toastr.error("an error is occued when try to connect to server , check your connection", "Error");
           this.toastr.error(err, "Error");
-          console.log(err);
-        }
-    )
+          console.log(err)} )
 }
 
-counterNewImage:number=0;
-onAddNewFile(event) {
-
-  let file:File = event.target.files[0];
-
-  if (file) {
-
-    if(!this.isMaxFile()){
-    
-        var ext =  file.name.split('.').pop();
-        this.startIdxAddedFile++;
-        var name = uuid.v4() +"_" + this.startIdxAddedFile +"."+ ext;
-        let imageProduct: IImageUrl={
-          name: name, uuid: "temp_uuid_" + this.counterNewImage,
-          productId: this.db_product.uuid,
-        };
-        this.counterNewImage++;
-
-        let image:IUpdateImage ={
-          isChanged: false,
-          isNew: true,
-          isToDeleted: false,
-          isFromProduct: false,
-          imageUrl: imageProduct,
-          file: file
-        } 
-        const reader = new FileReader();
-        reader.onload = (e: any) => {
-          image.src= (e.target.result);
-          
-        };
-        reader.readAsDataURL(image.file);
-
-        this.images.push(image);
-        
-         console.log(this.images )
-    }
-    else{
-      this.toastr.error(" the max images in product must be less then 6 ", "error files ")
-    }
-  }
-}
- 
-
-
-onEditImageClick(event: any, elm:IUpdateImage) {
-
-  try {
-    console.log("name image : " + elm.imageUrl.name);
-
-    let idx = this.images.findIndex(x=> x.imageUrl.uuid== elm.imageUrl.uuid);
-   
-    if(idx>=0){
-      this.images[idx].file= event.target.files[0];
-      
-      this.images[idx].isChanged= true;
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.images[idx].src= (e.target.result);
-       
-      };
-      reader.readAsDataURL(this.images[idx].file);
-     
-    } 
-
-    console.log(this.images )
-  }
-  catch (error) {
-    console.error("catch "  +error);
-  } 
-}
- 
- 
-onDeleteImageClick( elm:IUpdateImage): void {
-  try {
-
-    let idx = this.images.findIndex(x=> x.imageUrl.uuid== elm.imageUrl.uuid);
-    console.log("delete image idx :" +idx );
-    if(idx>=0){
-      if(this.images[idx].isFromProduct)
-        this.images[idx].isToDeleted=true; 
-      else
-        this.images.splice(idx,1);      
-    } 
-    console.log(this.images )
-  }
-  catch (error) {
-    console.error("catch "  +error);
-  }
-}
-
-
-saveProduct()
-{
-  this.HttpProduct.Update(this.db_product.uuid, this.db_product).subscribe( 
-    res => {
-              this.toastr.success("update product ID :"+ this.db_product.uuid  +" success", "update product")
-              this.router.navigate(['admin/products'])  
-          },
-    err=> {
-             this.toastr.success("error update product ID :"+ this.db_product.uuid  +" Error", "update Error")
-         },
-    () => console.log('update DONE!')   
-    
-    )
- }
-
-  
  
 submit() {
-// emppty stuff
+  // emppty stuff
 }
- 
- 
- 
+   
+   
 
-build_UploadNewImages():IUploadInfo[]
-{
-  let uploadList :IUploadInfo[]=null;
-
-  this.images.forEach(elm => 
+onNotif_AddFile( img:IImageUrl) {
+  console.log("add image to table :" );
+  console.log(img );
+  this.imgUrlService.Add(img).subscribe(
+    resp =>
     {
-      if((elm.isToDeleted==false) && (elm.isFromProduct==false)
-         && ((elm.isNew==true) || (elm.isChanged==true)) ) {
-          if(uploadList ==null)
-              uploadList=[];
+       console.log(resp)   ;
+      // this.blockUIdropzone.stop();
+    },
+    err=>{
+      //this.blockUIdropzone.stop();
+       console.log(err)  
+    }
+  )
+}
 
-        let upload:IUploadInfo ={
-          imageUrl: elm.imageUrl,
-          obs: new Subject<any>(),
-          isStartUploading: false,
-          isUploaded: false,
-          isUploadedToFirebase: false,
-          state: EnuUploadSts.WAIT_START,
-          file: elm.file
+onNotif_DelFile( img:IImageUrl) {
+  console.log("delete image to table :" );
+  console.log(img );
+
+  this.imgUrlService.Delete(img.uuid).subscribe(
+    resp =>
+    {
+       console.log(resp)   ;
+      // this.blockUIdropzone.stop();
+    },
+    err=>{
+      //this.blockUIdropzone.stop();
+       console.log(err)  
+    }
+  )
+}
+
+onNotif_PutProduct( p:IProduct) {
+  this.toastr.success("the product ID :"+ p.uuid  +" is successefly updated ", "update product");
+  this.toastr.warning("next step is to uploading images ", "uploading");
+  this.isProductEdited=true; 
+}
+
+  
+_onAddNewFile(event) {
+  let file:File = event.target.files[0];
+  if (file) {
+    if(!this.isMaxFile()){
+        let image:IUploadPut ={
+          isChanged: false, isNew: true, isToDeleted: false, isFromProduct: false, file: file, uuid: null,
+          name: null, isUploadedToFirebase: false, isUploaded: false, isStartUploading: false, state: EnuUploadSts.WAIT_START,
+          id:  this.images.length+1,
         } 
-        uploadList.push(upload);
-
-      }
-     
-    }) 
-  return   uploadList;
+        const reader = new FileReader();
+        reader.onload = (e: any) => {image.src= (e.target.result);};
+        reader.readAsDataURL(image.file);
+        this.images.push(image);
+        console.log(this.images )}
+    else{this.toastr.error(" the max images in product must be less then 6 ", "error files ") }
+  }
 }
-build_UploadUpdateImages():IUploadInfo[]
+ 
+
+
+_onEditImageClick(event: any, elm:IUploadPut) {
+    console.log("name image ID: " + elm.uuid);
+    elm.file= event.target.files[0];
+    elm.isChanged= true;
+    const reader = new FileReader();
+    reader.onload = (e: any) => { elm.src= (e.target.result)};
+    reader.readAsDataURL( elm.file);
+    console.log(this.images ) 
+}
+ 
+ 
+_onDeleteImageClick( elm:IUploadPut): void {
+
+    if(elm.isFromProduct)
+        elm.isToDeleted=true; 
+    else{
+        
+        let idx = this.images.findIndex(x=> x.id=== elm.id);
+        console.log("delete image idx :" +idx );
+        if(idx>=0) 
+            this.images.splice(idx,1);     
+    }
+    console.log(this.images )
+}
+
+_onEditProductClick()
 {
-  let uploadList :IUploadInfo[]=null;
+  this.HttpProduct.Update(this.db_product.uuid, this.db_product)
+  .subscribe( 
+    res => {
+      this.db_product.uuid=res.uuid;
+      this.Notif_PutProduct.next(this.db_product) } 
+    ,error =>{
+      this.toastr.error("error add product : " + error, "Error")} 
+  )
+ 
+  this.uploadingImages(); 
+ 
 
-  this.images.forEach(elm => 
-    {
-      if((elm.isToDeleted==false) && (elm.isFromProduct==true)
-      && ((elm.isNew==false) && (elm.isChanged==true)) ) {
-        if(uploadList ==null)
-            uploadList=[];
-        let upload:IUploadInfo ={
-          imageUrl: elm.imageUrl ,
-          obs: new Subject<any>(),
-          isStartUploading: false,
-          isUploaded: false,
-          file:elm.file,
-          isUploadedToFirebase: false,
-          state:  EnuUploadSts.WAIT_START,
-        } 
-        uploadList.push(upload);
-
-      }
-     
-    }) 
-  return   uploadList;
 }
-build_DeletedImages():IImageUrl[]
-{
-  let deletedList :IImageUrl[]=null;
+ 
 
-  this.images.forEach(elm => 
-    {
-      if(((elm.isToDeleted==true) &&(elm.isFromProduct==true))
-        // || ((elm.isChanged==true) &&(elm.isFromProduct==true))
-      ) {
-        if(deletedList ==null)
-            deletedList=[];
-        deletedList.push(elm.imageUrl);
-      }
-    }) 
-  return   deletedList;
+uploadingImages()  {
+ 
+  try 
+  {
+    this.images.forEach(elm => 
+      {
+        if(elm.isToDeleted){
+          console.log("elm is to del ");
+          // delete image from firebase 
+          let upload:IFileDelReq={ folderName: this.db_product.uuid, fileName: elm.name,};
+          console.log(upload);
+          this.uploadService.del(upload)
+          .subscribe( resp=>{
+                    if(resp.status)
+                    {
+                      this.toastr.success("delete file  :"+upload.fileName +" from directory : "+ upload.folderName, "Delete file");
+                      let image:IImageUrl ={name:elm.name, uuid:elm.uuid,productId:this.db_product.uuid};
+                      // notification to delete image from table imageUrl
+                      this.Notif_DelFile.next(image)
+                    }
+                    else
+                      this.toastr.error(" erro delete file  :"+upload.fileName +" from directory : "+ upload.folderName, "Delete file")
+            },
+            err=>{console.error(err) });
+        }
+        else {
+          //update image to firebase 
+          let obs : Observable<any> =null;
+           if((elm.isNew===true) && (elm.isFromProduct ===false))
+           {
+               // add new  image to firebase 
+              console.log("elm is to add ");
+              let Req :IFileAddReq = { folderName: this.db_product.uuid.toString(),file: elm.file}; 
+              obs =   this.uploadService.addNew( Req )  ;
+           }
+           else if((elm.isFromProduct ===true ) && (elm.isChanged ===true))
+           {
+              // update   image to firebase 
+              console.log("elm is to update ");
+              let Req :IFileUpdateReq = {
+                folderName: this.db_product.uuid.toString(),file: elm.file, uuid: elm.uuid,fileName:elm.name , }; 
+              obs =   this.uploadService.update( Req )  ;
+              // notification to delete image from table imageUrl
+              let image:IImageUrl ={name:elm.name, uuid:elm.uuid,productId:this.db_product.uuid};
+              this.Notif_DelFile.next(image)
+          }
+           if(obs !==null){
+              obs.subscribe((event: HttpEvent<any>) =>
+              {
+                // wait response or add or update image to fireBase
+                switch (event.type) {
+                  case HttpEventType.Sent:
+                    elm.isStartUploading=true;
+                    elm.state = EnuUploadSts.START_UPLOAD  ;
+                    break;
+                  case HttpEventType.UploadProgress:
+                    elm.percentage = Math.round(event.loaded / event.total * 100);
+                    if( elm.percentage>=100){
+                      elm.isUploaded = true;
+                      elm.msg = "waiting firebase...";
+                      elm.src="assets/waiting2_firebase.gif";
+                      elm.state = EnuUploadSts.UPLOADED_WAIt_FIREBASE  ;
+                    }
+                    break;
+                    case HttpEventType.Response:
+                      let Resp :IFileUploadResp = event.body as IFileUploadResp; 
+                      console.log(Resp);
+                      let image:IImageUrl ={
+                          url:Resp.url,
+                          name:Resp.fileName,
+                          productId:this.db_product.uuid,
+                      };
+                      elm.src=Resp.url;
+                      elm.isUploadedToFirebase = true;
+                      elm.msg = "file uploaded Ok ";
+                      elm.state = EnuUploadSts.UPLOADED_FIREBASE  ;
+                       // notification to update image in  table imageUrl
+                      this.Notif_AddFile.next(image);
+                }
+              })
+            }
+        }
+      }) 
+        
+  }
+  catch (error) {
+    console.error(error);
+    this.toastr.error(error , "uploading")
+  }
 }
+
+
 
 isMaxFile(): boolean
 {
@@ -318,233 +319,5 @@ isMaxFile(): boolean
     return true;
   return false; 
 }
-onUploadImagesClick() {
  
-  try {
- 
-    this.edit.del.List=this.build_DeletedImages();
-    this.edit.add.List = this.build_UploadNewImages();
-    this.edit.put.List = this.build_UploadUpdateImages();
-    if(this.edit.del.List !==null)
-      this.edit.del.length= this.edit.del.List.length;
-    if(this.edit.add.List !==null)
-      this.edit.add.length= this.edit.add.List.length;   
-    if(this.edit.put.List !==null)
-      this.edit.put.length= this.edit.put.List.length;
-
-
-
-    console.log("edit.del.List:"+  this.edit.del.length) 
-    console.log("edit.add.List:"+  this.edit.add.length)
-    console.log("edit.put.List:"+ this.edit.put.length)
-  
-    if(( this.edit.add.length==0 ) && (this.edit.del.length==0)&& ( this.edit.put.length==0)){
-      this.toastr.info("no image to updating or to add or to delete   ", "uploading")
-      this.saveProduct();
-    
-      return 
-    }
-
- 
-   
-    this.edit.del.List?.forEach(elm => 
-    {
-        console.log("delete image :  "+elm.name  )
-        let  upload:IFileDelReq={
-          folderName: elm.productId,
-          fileName: elm.name,
-        }
-        console.log("delete image uuid : "+ elm.uuid) ;
-        this.uploadService.deleteFireBase(upload).subscribe
-        (
-        (respDel:IFileDelResp)=>
-        {
-            console.log(respDel);
-            if(respDel.status)
-            {
-              this.toastr.success("delete file  :"+elm.name +" from directory : "+ elm.productId, "Delete file")
-              this.HttpImageUrl.Delete(elm.uuid )
-              .subscribe(
-              resp=>{
-                console.log(resp);
-                this.edit.del.Cntr++; 
-                if(this.edit.del.Cntr==this.edit.del.length){
-                  console.log("delete all  deleted image : ");
-                    {
-                      this.Obs_WaitUpdating.next(this.edit);
-                    }
-                }
-                this.toastr.success("Deleting image :"+ elm.name  +" success", "Deleting")
-              },
-              err=>{  
-                this.toastr.error("Error deleting image :"+ elm.name  +"  " + err, "Error Deleting")
-              })
-            }
-            else
-            {
-              this.toastr.error(" erro delete file  :"+elm.name +" from directory : "+ elm.productId, "Delete file")
-            }
-        },
-        err=>{
-          this.toastr.error(  err,"Error ")
-          console.error(err) ;
-        });
-    })  
-   
-
- 
-    
-    this.edit.add.List?.forEach(elm => 
-    {
-      console.log("new image :  "+elm.imageUrl.name  )
-      
-      elm.obs.asObservable().subscribe(resp =>{
-        this.edit.add.Cntr++; 
-        if(this.edit.add.Cntr== this.edit.add.length){
-          console.log("add all new image :  ")
-          this.Obs_WaitUpdating.next(this.edit);
-        }
-      });
-      this.uploadImageOfProduct(this.db_product.uuid, elm, true);
-    })  
- 
-    
-    this.edit.put.List?.forEach(elm => 
-    {
-      console.log("update image :  "+elm.imageUrl.name  )
-    
-      elm.obs.asObservable().subscribe(resp =>{
-        this.edit.put.Cntr++;
-        if(this.edit.put.Cntr== this.edit.put.length){
-          console.log("update all new image :  ")
-          this.Obs_WaitUpdating.next(this.edit);
-        } 
-      });
-      this.uploadImageOfProduct(this.db_product.uuid, elm, false);
-    })  
-
-    this.Obs_WaitUpdating.asObservable().subscribe(resp =>
-      {
-
-        console.log("del.length : "+  this.edit.del.length +"  - del.Cntr : "+ this.edit.del.Cntr ) 
-        console.log("add.length : "+  this.edit.add.length +"  - add.Cntr : "+ this.edit.add.Cntr )
-        console.log("put.length : "+  this.edit.put.length +"  - put.Cntr : "+ this.edit.put.Cntr )
-
-          if((this.edit.add.Cntr == this.edit.add.length)
-             && (this.edit.del.Cntr == this.edit.del.length)
-             && (this.edit.put.Cntr == this.edit.put.length)
-          
-          ){
-            console.log("save product process : " )
-            this.saveProduct();
-          }
-
-
-      })
-
-  }
-  catch (error) {
-    console.error(error);
-    this.toastr.error(error , "uploading")
-  }
-}
-
-
-uploadImageOfProduct(productId:string, elm:IUploadInfo , isToAdd:boolean)  {
- 
-  try 
-  {
-    let Req :IFileUploadReq = {
-      folderName: productId.toString(),
-      fileName: elm.imageUrl.name,
-      file: elm.file
-    }; 
-    console.log(Req);
-    this.uploadService.uploadFireBase( Req )  
-    .subscribe((event: HttpEvent<any>) =>
-    {
-      switch (event.type) {
-        case HttpEventType.Sent:
-         // console.log('Request has been made');
-          elm.isStartUploading=true;
-          elm.msg = "starting ...";
-          elm.state = EnuUploadSts.START_UPLOAD  ;
-          break;
-        case HttpEventType.ResponseHeader:
-         // console.log('Response header has been received!');
-          break;
-        case HttpEventType.UploadProgress:
-          elm.percentage = Math.round(event.loaded / event.total * 100);
-          // console.log(`Uploading ${ elm.percentage}%`);
-          elm.msg = "Uploading file   " +   elm.percentage +"%"   ;
-          if( elm.percentage>=100){
-            elm.isUploaded = true;
-            elm.msg = "waiting firebase...";
-            elm.src="assets/waiting2_firebase.gif";
-            elm.state = EnuUploadSts.UPLOADED_WAIt_FIREBASE  ;
-          }
-          break;
-          case HttpEventType.Response:
-           // console.log('User successfully created');
-            let Resp :IFileUploadResp = event.body as IFileUploadResp; 
-            console.log(Resp);
-            elm.imageUrl.url=Resp.url;
-            elm.isUploadedToFirebase = true;
-            elm.msg = "file uploaded Ok ";
-            elm.state = EnuUploadSts.UPLOADED_FIREBASE  ;
-            elm.imageUrl.productId=productId;
-            console.log(elm.imageUrl)  
-            if(isToAdd){
-                elm.imageUrl.uuid=null;
-                this.HttpImageUrl.Add( elm.imageUrl  ).subscribe(
-                  resp =>
-                  {
-                    console.log(resp)   ;
-                    elm.obs.next(elm);
-                  },
-                  err=>{
-                    elm.obs.next(elm);
-                    console.log(err)  
-                  }
-                )
-              }
-            else{
-                this.HttpImageUrl.Update( elm.imageUrl.uuid, elm.imageUrl  ).subscribe(
-                  resp =>
-                  {
-                    console.log(resp)   ;
-                    elm.obs.next(elm);
-                  },
-                  err=>{
-                    elm.obs.next(elm);
-                    console.log(err)  
-                  }
-                )}
-            setTimeout(() => {
-              elm.msg  = "";
-            }, 1500);
-      }
-    })
-  }
-  catch (error) {
-    console.error(error);
-    this.toastr.error(error , "uploading")
-  }
-}
-
-   
-
-
- 
-
-
-
-
-
-
-
-
-
-
-
 }

@@ -23,7 +23,7 @@
     "@angular/router": "~13.2.1",
     "angular-material-icons": "^0.7.1",
     "ng-block-ui": "^3.0.2",
-    "ngx-toastr": "^14.2.2",
+    "ngx-toastr": "^14.2.4",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
     "uikit": "^3.13.5",

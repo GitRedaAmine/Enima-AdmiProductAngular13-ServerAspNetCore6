@@ -29,16 +29,26 @@ export interface IProduct
 }
 
 
+export interface IFileStatusResp
+{
 
-export interface IFileUploadReq
+     status:boolean  ,
+     msg:string  ,
+
+}
+export interface IFileAddReq
 {
      folderName:string  ,
-     fileName:string  ,
      file :File,
 }
 
+export interface IFileUpdateReq extends IFileAddReq 
+{
+     fileName:string,
+     uuid:string ,
+}
 
-export interface IFileUploadResp
+export interface IFileUploadResp extends IFileStatusResp 
 {
      folderName:string  ,
      fileName:string  ,
@@ -55,10 +65,9 @@ export interface IFileDelReq
     
 }
 
-export interface IFileDelResp
+export interface IFileDelResp extends IFileStatusResp 
 {
 
-     status:boolean  ,
-     msg:string  ,
+ 
 
 }

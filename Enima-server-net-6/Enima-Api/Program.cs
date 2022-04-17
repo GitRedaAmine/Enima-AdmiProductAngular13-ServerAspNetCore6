@@ -75,14 +75,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
+ 
 app.UseStaticFiles();
-app.UseStaticFiles(new StaticFileOptions()
-{
-    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(),
-                                            @IFileUploadService.StaticFolder)),
-    RequestPath = new PathString("/"+IFileUploadService.StaticFolder)
-});
+
 
 //RequestPath = new PathString("/${IFileUploadService.StaticFolder}")
 
@@ -102,7 +97,16 @@ app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
 
 app.UseAuthorization();
-
+var directoryStatic= Path.Combine(Directory.GetCurrentDirectory(), @IFileUploadService.StaticFolder) ;
+if (!Directory.Exists(directoryStatic))
+{
+    Directory.CreateDirectory(directoryStatic);
+}
+app.UseStaticFiles(new StaticFileOptions()
+{
+    FileProvider = new PhysicalFileProvider(directoryStatic),
+    RequestPath = new PathString("/" + IFileUploadService.StaticFolder)
+});
 app.MapControllers();
 
 app.Run();

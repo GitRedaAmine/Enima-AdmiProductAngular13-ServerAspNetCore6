@@ -1,115 +1,119 @@
-  
+
+ 
+ 
  <div  fxLayout="column" style="margin: 25px;"   >
     <mat-toolbar  fxLayoutAlign="space-between center"  >
 
         <button mat-mini-fab   
-        
- 
           (click)="_onBackProduct()">
           <mat-icon> arrow_back   </mat-icon>
         </button> 
 
-          <button   mat-button  color="accent" >Product ID : {{data.uuid}}</button>
-          <button mat-mini-fab    
-   
-           aria-label="delete Product"  (click)="onAddProductClick()"  >
-              <mat-icon> save </mat-icon>
+          <button   mat-button  color="accent" >Product ID : {{data?.uuid}}</button>
+
+          <button mat-mini-fab (click)="onAddingProcessClick()" *ngIf="!isProductAdded"  >
+              <mat-icon> add </mat-icon>
+          </button>    
+          <button mat-mini-fab (click)="onUploadProcessClick()" *ngIf="isProductAdded" >
+              <mat-icon> cloud_upload </mat-icon>
           </button>
     </mat-toolbar>
 
-
-    <div fxLayout="row wrap" fxLayoutAlign="space-around   center">
-        <div fxLayout="column"  style="margin: 25px;"     fxFlex="45">
-            <mat-toolbar  style="margin-top: 25px;"  fxLayoutAlign="space-around center"  >
-              <span>product images :</span>
-              <button mat-stroked-button color="primary"   (click)="_onReset()">Reset</button> 
-            </mat-toolbar>
-
-            <div    *blockUI="'dropzoneBlockui'" >
-                <div  class="drop-zone-container"  fxLayoutAlign="center center"    
-                      appFilePicker
-                      #dropZonePicker="appFilePicker" 
-                      [multiple]="true" 
-                      [maxFiles]="6"
-                      (filesChanged)="_onFilesChanged($event)" 
-                      (filesMax)="_filesMax($event)" 
-                      (filesReset)="_reset()">
-                      <mat-icon color="primary">add_circle</mat-icon>
-                  <span>Drag & Drop Files</span>
-                </div>
-              </div>
-
-              <!-- <img    class="imgEnima" alt="photo of wait.jpg" 
-              src="assets/waiting_firebase.gif"   >  -->
-            <div  fxLayout="row wrap" fxLayoutAlign="center center"    > 
-  
-              <div class="div_image" fxLayout="column" *ngFor="let elm of uploads"  >
-               
-                <img    class="imgEnima" alt="photo of {{elm.imageUrl.name}}" 
-                 src="{{(elm.isUploadedToFirebase===false)?elm.src:elm.imageUrl.url }}"   > 
-              
-                <div      fxLayout="row wrap" fxLayoutAlign="space-around center" >
-                  <button *ngIf="!elm.isStartUploading" mat-icon-button color="primary" (click)="inputField.click()">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <input #inputField hidden type="file" (change)="onChangeFile($event, elm)" />
-      
-                </div>
-                <mat-progress-bar *ngIf="(elm.isStartUploading ==true) && (elm.isUploadedToFirebase===false)"
-                [mode]="elm.isUploaded==false?'determinate':'indeterminate' " 
-                 color="warn" 
-                 [value]="elm.percentage"  >{{elm.percentage}}</mat-progress-bar>  
-                 <p *ngIf="elm.msg"  fxLayoutAlign="space-around center"  style="font-size: small; color: brown; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;">{{elm.msg}}</p>
-                 <div  *ngIf="elm.isStartUploading" >
-                 <div [ngSwitch]="elm.state"  fxLayoutAlign="space-around center" >
-
-                  <mat-icon *ngSwitchCase="this.UPLOADSTS.START_UPLOAD"           color="accent"> more_horiz   </mat-icon>
-                  <mat-icon *ngSwitchCase="this.UPLOADSTS.UPLOADED_WAIt_FIREBASE" color="accent"> style  </mat-icon>
-                  <mat-icon *ngSwitchCase="this.UPLOADSTS.UPLOADED_FIREBASE"      color="accent"> check </mat-icon>
-                  
-                </div>
-              </div>
-                 
-              </div>  
-            </div>
-
-        </div>
-        <div fxLayout="column"   style="margin: 25px;"     fxFlex="45">
-            <mat-toolbar  style="margin: 25px;"  >
-              <span>product informations :</span>
-            </mat-toolbar>
-       
-            <div  fxLayout="row wrap"  style="margin: 25px;"   >
-              <mat-form-field color="accent">
-              <input matInput placeholder="name"    [(ngModel)]="data.name" name="name">
-              <mat-icon matSuffix color="accent">business  </mat-icon>
-              </mat-form-field>
-              <mat-form-field color="accent">
-                <input  matInput  type="number" #input   placeholder="price" [(ngModel)]="data.price" name="price" required > 
-                <mat-icon matSuffix color="accent">monetization_on</mat-icon>
-              </mat-form-field>
-            </div>
-        
-            <div  fxLayout="row wrap" style="margin: 25px;"  >
-          
-              <mat-form-field color="accent" >
-                <input  matInput  type="number" #inputstate    placeholder="stocks" [(ngModel)]="data.stocks" name="stocks"  required >
-                <mat-icon matSuffix color="accent">archive  </mat-icon>
-              </mat-form-field>
-              <mat-form-field color="accent">
-                <input matInput  type="number"   placeholder="rating" [(ngModel)]="data.rating" name="rating">
-                <mat-icon matSuffix color="accent">stars   </mat-icon>
-              </mat-form-field>
-             </div>
-    
-             <div  fxLayout="row wrap" style="margin: 25px;"  >
-
-              <app-brands [brandId] ="data.brandId"   (BrandEvent)="onSelectBrand($event)"></app-brands>
-              <app-categories [catId] ="data.categorieId"    (CategorieEvent)="onSelectCategorie($event)"></app-categories>
+    <div fxLayout="column" *ngIf="!isProductAdded"  style="margin: 25px;"     >
+      <mat-toolbar  style="margin: 25px;"  >
+        <span>product informations :</span>
+      </mat-toolbar>
  
-             </div>
-        </div>
+      <div  fxLayout="row wrap"  style="margin: 25px;"   >
+        <mat-form-field color="accent">
+        <input matInput placeholder="name"    [(ngModel)]="data.name" name="name">
+        <mat-icon matSuffix color="accent">business  </mat-icon>
+        </mat-form-field>
+        <mat-form-field color="accent">
+          <input  matInput  type="number" #input   placeholder="price" [(ngModel)]="data.price" name="price" required > 
+          <mat-icon matSuffix color="accent">monetization_on</mat-icon>
+        </mat-form-field>
       </div>
+  
+      <div  fxLayout="row wrap" style="margin: 25px;"  >
+    
+        <mat-form-field color="accent" >
+          <input  matInput  type="number" #inputstate    placeholder="stocks" [(ngModel)]="data.stocks" name="stocks"  required >
+          <mat-icon matSuffix color="accent">archive  </mat-icon>
+        </mat-form-field>
+        <mat-form-field color="accent">
+          <input matInput  type="number"   placeholder="rating" [(ngModel)]="data.rating" name="rating">
+          <mat-icon matSuffix color="accent">stars   </mat-icon>
+        </mat-form-field>
+       </div>
+
+       <div  fxLayout="row wrap" style="margin: 25px;"  >
+
+        <app-brands [brandId] ="data.brandId"   (BrandEvent)="onSelectBrand($event)"></app-brands>
+        <app-categories [catId] ="data.categorieId"    (CategorieEvent)="onSelectCategorie($event)"></app-categories>
+
+       </div>
+    </div>
+     
+
+
+    <div fxLayout="column"   *ngIf="isProductAdded"   style="margin: 25px;"    >
+        <mat-toolbar  style="margin-top: 25px;"  fxLayoutAlign="space-around center"  >
+          <span>product images :</span>
+          <button mat-stroked-button color="primary"   (click)="_onReset()">Reset</button> 
+        </mat-toolbar>
+
+        <div    *blockUI="'dropzoneBlockui'" >
+            <div  class="drop-zone-container"  fxLayoutAlign="center center"    
+                  appFilePicker
+                  #dropZonePicker="appFilePicker" 
+                  [multiple]="true" 
+                  [maxFiles]="6"
+                  (filesChanged)="_onFilesChanged($event)" 
+                  (filesMax)="_filesMax($event)" 
+                  (filesReset)="_reset()">
+                  <mat-icon color="primary">add_circle</mat-icon>
+              <span>Drag & Drop Files</span>
+            </div>
+          </div>
+
+          <!-- <img    class="imgEnima" alt="photo of wait.jpg" 
+          src="assets/waiting_firebase.gif"   >  -->
+        <div  fxLayout="row wrap" fxLayoutAlign="center center"    > 
+
+          <div class="div_image" fxLayout="column" *ngFor="let elm of uploads"  >
+            
+            <img    class="imgEnima" alt="photo of {{elm.file.name}}" 
+              src="{{elm.src }}"   > 
+          
+            <div      fxLayout="row wrap" fxLayoutAlign="space-around center" >
+              <button *ngIf="!elm.isStartUploading" mat-icon-button color="primary" (click)="inputField.click()">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <input #inputField hidden type="file" (change)="onChangeFile($event, elm)" />
+  
+            </div>
+            <mat-progress-bar *ngIf="(elm.isStartUploading ==true) && (elm.isUploadedToFirebase===false)"
+            [mode]="elm.isUploaded==false?'determinate':'indeterminate' " 
+              color="warn" 
+              [value]="elm.percentage"  >{{elm.percentage}}</mat-progress-bar>  
+              <p *ngIf="elm.msg"  fxLayoutAlign="space-around center"  style="font-size: small; color: brown; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;">{{elm.msg}}</p>
+              <div  *ngIf="elm.isStartUploading" >
+              <div [ngSwitch]="elm.state"  fxLayoutAlign="space-around center" >
+
+              <mat-icon *ngSwitchCase="this.UPLOADSTS.START_UPLOAD"           color="accent"> more_horiz   </mat-icon>
+              <mat-icon *ngSwitchCase="this.UPLOADSTS.UPLOADED_WAIt_FIREBASE" color="accent"> style  </mat-icon>
+              <mat-icon *ngSwitchCase="this.UPLOADSTS.UPLOADED_FIREBASE"      color="accent"> check </mat-icon>
+              
+            </div>
+          </div>
+              
+          </div>  
+        </div>
+
+    </div>
+
+       
              
   </div>
  

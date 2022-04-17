@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.StaticFiles;
  
 using Firebase.Auth;
 using Firebase.Storage;
+using Enima_Api.Models;
 
 namespace Enima_Api.Services
 {
@@ -48,15 +49,24 @@ namespace Enima_Api.Services
             FirebaseFolder = Configuration["firebase:FirebaseFolder"];
             FirebaseFolderProduct = Configuration["firebase:FirebaseFolderProduct"];
         }
-        public async Task<string> UploadFileAsync(string Filesfolder, string fileName, IFormFile file)
+        public async Task<UploadResp> UploadFileAsync(string Filesfolder, string fileName, IFormFile file)
         {
-            string FileLinkFromFirebaseStorage = string.Empty; ;
+
+            UploadResp FileUploadResp = new UploadResp();
             try
             {
                 if (file == null
                   || Filesfolder == string.Empty
                   || fileName == string.Empty)
-                    return "errior";
+                {
+                    FileUploadResp.status = false;
+                    FileUploadResp.msg = "Error object data , check filename or foldername and IFormFile ";
+                    return FileUploadResp;
+                }
+
+
+                FileUploadResp.fileName = fileName;
+                FileUploadResp.folderName = Filesfolder;
 
                 FileStream fs = null;
 
@@ -95,27 +105,33 @@ namespace Enima_Api.Services
                         // error during upload will be thrown when await the task
                         try
                         {
-                            FileLinkFromFirebaseStorage = await upload;
+                            FileUploadResp.url = await upload;
+                            FileUploadResp.status = true;
+                            FileUploadResp.msg = " file : " + fileName + " is correctely uploaded in subdirectory ( " + Filesfolder + ")";
+
                             fs.Close();
                             DeleteDirectory(uploadsDir,true);
                             //System.IO.File.Delete(Path.Combine(uploadsDir, fileName)); 
                         }
                         catch (Exception ex)
                         {
-                            var error = $"Exception was thrown: {ex}";
+                            FileUploadResp.status = false;
+                            FileUploadResp.msg = " error uploading file : " + fileName + " , exception : "+ ex.Message  ;
                         }
                     }
 
                 }
 
-                return FileLinkFromFirebaseStorage;
+
 
             }
             catch (Exception ex)
             {
-                var error = $"Exception was thrown: {ex}";
-                return FileLinkFromFirebaseStorage;
+                FileUploadResp.status = false;
+                FileUploadResp.msg = " error uploading file : " + fileName + " , exception : " + ex.Message;
             }
+
+            return FileUploadResp;
         }
 
 
@@ -153,19 +169,8 @@ namespace Enima_Api.Services
             }
         }
 
+          
 
-        private void Progress_ProgressChanged(object? sender, FirebaseStorageProgress e)
-        {
-            Console.WriteLine($"Progress: {e.Percentage} %");
-        }
-
-        public Task<string> UploadFileProgressAsync( string folderName, string fileName, IFormFile file)
-        {
-            throw new NotImplementedException();
-        }
-
-
- 
         private void DeleteDirectory(string directoryName, bool checkDirectiryExist)
         {
             if (Directory.Exists(directoryName))

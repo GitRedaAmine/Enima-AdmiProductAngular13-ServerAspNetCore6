@@ -7,15 +7,15 @@
           <mat-icon> arrow_back   </mat-icon>
         </button> 
         
-          <button *ngIf="data!=null"  mat-button  color="accent" >Product ID : {{data.uuid}}</button>
-          <button mat-mini-fab (click)="onDeleteClick()"   
+          <button *ngIf="isLoaded"  mat-button  color="accent" >Product ID : {{data.uuid}}</button>
+          <button mat-mini-fab (click)="_onDelfiles()"   
  
           aria-label="delete Product"    >
               <mat-icon> delete_forever </mat-icon>
           </button>
       </mat-toolbar>
 
-      <div fxLayout="row wrap"  fxLayoutAlign="space-around   center">
+      <div fxLayout="row wrap" *ngIf="isLoaded"  fxLayoutAlign="space-around   center">
 
         <div fxLayout="column"   *blockUI="'dropzoneBlockui'"  style="margin-top: 25px;"  fxFlex="45">
             <mat-toolbar   fxLayoutAlign="space-around center"  >

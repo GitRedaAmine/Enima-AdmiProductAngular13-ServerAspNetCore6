@@ -1,19 +1,22 @@
 import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { MatStepper } from '@angular/material/stepper';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { BlockUI, NgBlockUI } from 'ng-block-ui';
 import { ToastrService } from 'ngx-toastr';
 import {  Subject } from 'rxjs';
 import { FilePickerDirective } from 'src/app/admin/directives/file-picker.directive';
-import { EnuUploadSts, IUploadInfo } from 'src/app/admin/models/admin.model';
+import { EnuUploadSts, IUploadAdd,  } from 'src/app/admin/models/admin.model';
 import { IBrand } from 'src/app/shared/models/api/ibrand.model';
 import { ICategorie } from 'src/app/shared/models/api/icategorie.model';
-import { IFileUploadReq, IFileUploadResp, IImage, IImageUrl, IProduct } from 'src/app/shared/models/api/iproduct.model';
+import {  IFileAddReq, IFileUploadResp, IImageUrl, IProduct } from 'src/app/shared/models/api/iproduct.model';
 import { ImageUrlService } from 'src/app/shared/services/api/imageUrl.service';
 import { ProductService } from 'src/app/shared/services/api/product.service';
 import { UploadService } from 'src/app/shared/services/api/upload.service';
 import * as uuid from 'uuid';
 
+const ADD_ICON="add"
+const UPLOAD_ICON="cloud_upload"
 
 @Component({
   selector: 'app-add',
@@ -24,16 +27,25 @@ export class AddComponent implements OnInit {
 
   UPLOADSTS: typeof EnuUploadSts;
   data: IProduct; 
-  uploads :IUploadInfo[]=[];
+  uploads :IUploadAdd[]=[];
   uuid:string =""; 
   isLoaded:boolean =false; 
   startIdxAddedFile=0;
+
+  NotifAddProduct:Subject<IProduct> = new Subject<IProduct>();
+  NotifUploadImage:Subject<IImageUrl> = new Subject<IImageUrl>();
+  NotifAddImage:Subject<IProduct> = new Subject<IProduct>();
+  isProductAdded :boolean=false; 
+  isUploading :boolean=false; 
+  NavAddingIcon:string =ADD_ICON; 
+
+
 
 
   @BlockUI('dropzoneBlockui') blockUIdropzone: NgBlockUI;
   @ViewChild('dropZonePicker', { static: true })
   _dropZonePicker: FilePickerDirective;
-  
+
   
    constructor( private route: ActivatedRoute, 
                 public router: Router ,
@@ -55,10 +67,78 @@ ngOnInit(): void {
         brandId:"",
         categorieId:"",
     }
+
+    this.NotifAddProduct.asObservable().subscribe( p => {
+      console.log(p);
+      console.log("start uploading images .....");
+    })
+
+
+    this.NotifUploadImage.asObservable().subscribe( p => {
+      console.log(p);
+      this.onUploadedImage(p);
+    })
+}
+
+onAddingProcessClick(){
+
+  if(!this.isProductAdded){
+    this.addProductInfomation();
+  }
+  else{
+    this.toastr.error("the product ID:" + this.data.uuid + " is already added ..")
+  }
+}
+
+onUploadProcessClick() {
+  this.isUploading=true; 
+  if(this.uploads.length>0){
+ 
+    this.uploads.forEach(elm => 
+    {
+        this.uploadImageOfProduct(this.data.uuid, elm);
+    })
+  }
+  else
+    this.isUploading=false; 
  
 }
- 
 
+
+addProductInfomation() {
+
+  this.HttpProduct.Add(this.data)
+  .subscribe( 
+    res => {
+      this.data.uuid=res.uuid;
+      this.toastr.success("the product ID :"+ this.data.uuid  +" is successefly added ", "add product");
+      this.toastr.warning("next step is to uploading images ", "uploading");
+      this.isProductAdded=true; 
+      this.NotifAddProduct.next(this.data);
+ 
+    },
+    error =>{
+      this.toastr.error("error add product : " + error, "Error");
+    } 
+  )
+}
+
+
+
+onUploadedImage( img:IImageUrl) {
+  this.imgUrlService.Add(img).subscribe(
+    resp =>
+    {
+       console.log(resp)   ;
+       this.blockUIdropzone.stop();
+    },
+    err=>{
+      this.blockUIdropzone.stop();
+       console.log(err)  
+    }
+  )
+}
+ 
 onSelectBrand(brand: IBrand) {
   this.data.brandId=brand.uuid;
 }
@@ -68,7 +148,6 @@ onSelectCategorie(categorie: ICategorie) {
  
  
 _onReset() {
- 
   this.uploads=[];
 }
 
@@ -78,7 +157,7 @@ _reset() {
 }
 
 _onFilesChanged(files: FileList) {
-  let idxName=0;
+
   this.uploads=[];
   for (let i = 0; i < files.length; i++) {
     if (files[i].type.split('/')[0] !== 'image') {
@@ -87,13 +166,8 @@ _onFilesChanged(files: FileList) {
     }
     else
     {
-      idxName++;
-      var ext =   files[i].name.split('.').pop();
-      let upload:IUploadInfo ={
-        imageUrl: { name: uuid.v4() +"_"+ idxName + "." + ext },
-        obs: new Subject<any>(),
+      let upload:IUploadAdd ={
         isStartUploading: false,
-
         isUploaded: false,
         isUploadedToFirebase: false,
         state: EnuUploadSts.WAIT_START,
@@ -125,11 +199,11 @@ submit() {
   // emppty stuff
 }
    
-onChangeFile(event: any, elm:IUploadInfo) {
+onChangeFile(event: any, elm:IUploadAdd) {
   
    
     try {
-      let idx = this.uploads.findIndex(x=> x.imageUrl.name== elm.imageUrl.name);
+      let idx = this.uploads.findIndex(x=> x.file.name== elm.file.name);
       if(idx>=0){
         this.uploads[idx].file= event.target.files[0];
      
@@ -146,9 +220,9 @@ onChangeFile(event: any, elm:IUploadInfo) {
   
   }
    
+ 
   
-  
-CntrUploadedImages:number=0;
+
  onAddProductClick() {
  
   try {
@@ -185,33 +259,26 @@ CntrUploadedImages:number=0;
 }
   
 
-uploadImageOfProduct(productId:string, elm:IUploadInfo)  {
+uploadImageOfProduct(productId:string, elm:IUploadAdd)  {
  
   try 
   {
-    let Req :IFileUploadReq = {
+    this.blockUIdropzone.start();
+    let Req :IFileAddReq = {
       folderName: productId.toString(),
-      fileName: elm.imageUrl.name,
       file: elm.file
     }; 
 
-    this.uploadService.uploadFireBase( Req )  
+    this.uploadService.addNew( Req )  
     .subscribe((event: HttpEvent<any>) =>
     {
       switch (event.type) {
         case HttpEventType.Sent:
-          console.log('Request has been made');
           elm.isStartUploading=true;
-          elm.msg = "starting ...";
           elm.state = EnuUploadSts.START_UPLOAD  ;
-          break;
-        case HttpEventType.ResponseHeader:
-          console.log('Response header has been received!');
           break;
         case HttpEventType.UploadProgress:
           elm.percentage = Math.round(event.loaded / event.total * 100);
-          // console.log(`Uploading ${ elm.percentage}%`);
-          elm.msg = "Uploading file   " +   elm.percentage +"%"   ;
           if( elm.percentage>=100){
             elm.isUploaded = true;
             elm.msg = "waiting firebase...";
@@ -220,41 +287,18 @@ uploadImageOfProduct(productId:string, elm:IUploadInfo)  {
           }
           break;
           case HttpEventType.Response:
-            console.log('User successfully created');
             let Resp :IFileUploadResp = event.body as IFileUploadResp; 
-          //  console.log(Resp);
-            elm.imageUrl.url=Resp.url;
+            console.log(Resp);
+            let image:IImageUrl ={
+                url:Resp.url,
+                name:Resp.fileName,
+                productId:productId,
+            };
+            elm.src=Resp.url;
             elm.isUploadedToFirebase = true;
             elm.msg = "file uploaded Ok ";
             elm.state = EnuUploadSts.UPLOADED_FIREBASE  ;
-            elm.imageUrl.productId=productId;
-            this.imgUrlService.Add( elm.imageUrl  ).subscribe(
-              resp =>
-              {
-                 console.log(resp)   ;
-                 this.CntrUploadedImages++;
-                 if(this.CntrUploadedImages=== this.uploads.length)
-                 {
-                   this.blockUIdropzone.stop();
-                   this.router.navigate(['admin/products'])
-                 }
-
-              },
-              err=>{
-                this.CntrUploadedImages++;
-
-                if(this.CntrUploadedImages=== this.uploads.length)
-                 {
-                   this.blockUIdropzone.stop();
-                   this.router.navigate(['admin/products'])
-                 }
-
-                 console.log(err)  
-              }
-            )
-            setTimeout(() => {
-              elm.msg  = "";
-            }, 1500);
+            this.NotifUploadImage.next(image);
       }
     })
   }

@@ -3,17 +3,6 @@ import { Subject } from "rxjs";
 import { IImage, IImageUrl } from "src/app/shared/models/api/iproduct.model";
 
  
-export interface IUpdateImage  {
-  imageUrl ?    :IImageUrl  ,
-  file:File,
-  isToDeleted? :boolean,
-  isChanged? :boolean,
-  isNew?:boolean,
-  isFromProduct?:boolean,
-  src?:string | ArrayBuffer | null,
-  percentage ?: number,
-}
-
 
 export enum EnuUploadSts
 {
@@ -24,19 +13,28 @@ export enum EnuUploadSts
 }
 
 
-export interface IUploadInfo   {
-  imageUrl ?    :IImageUrl  ,
+export interface IUploadAdd  {
   percentage ?: number,
-  src ?:string;
+  src ?:string ,//| ArrayBuffer | null,
   file:File;
   isUploadedToFirebase :boolean,
   isUploaded  :boolean,
   isStartUploading:boolean,
   msg?:string,
   state:  EnuUploadSts,
-  obs?: Subject<any>,
 }
 
+export interface IUploadPut extends  IUploadAdd {
+  uuid :string  ,
+  name:string,
+  isToDeleted? :boolean,
+  isChanged? :boolean,
+  isNew?:boolean,
+  isFromProduct?:boolean,
+  id:number,
+}
+
+ 
 export interface IDeleteInfo   {
   image ?    :IImage  ;
   isDeleted ?:boolean;

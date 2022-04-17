@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { BlockUI, NgBlockUI } from 'ng-block-ui';
 import { ToastrService } from 'ngx-toastr';
-import { tap } from 'rxjs';
+import { Subject, tap } from 'rxjs';
  
  
 import { IFileDelReq, IFileDelResp, IImage, IImageUrl, IProduct } from 'src/app/shared/models/api/iproduct.model';
@@ -25,6 +25,10 @@ export class DelComponent implements OnInit {
   data: IProduct=null; 
   imagesProduct: IImageUrl[]; 
 
+  Notif_ToDelProduct:Subject<IProduct> = new Subject<IProduct>();
+  Notif_DelFile:Subject<IImageUrl> = new Subject<IImageUrl>();
+
+  
   uuid:string =""; 
   isLoaded:boolean =false; 
    constructor( private route: ActivatedRoute, 
@@ -44,27 +48,21 @@ ngOnInit(): void {
  
 onLoad(uuid:string ) {
     this.HttpProduct.GetById(uuid) 
-    .subscribe
-    (   
-        (response)=>
-          {
-             this.data = response ;
-
-             this.imagesProduct = [];
-             this.imgUrlService.getImagesByProductId(this.data.uuid).subscribe( resp => 
-              {
-                this.imagesProduct= resp;
-
-              }) 
-
-             this.isLoaded=true;
+    .subscribe ( (resp)=>{
+                this.data = resp ;
+                this.imagesProduct = [];
+                this.imgUrlService.getImagesByProductId(this.data.uuid).subscribe( resp =>{ this.imagesProduct= resp}) 
+                this.isLoaded=true;
           },
-        (err) =>
-        {
-            this.toastr.error(err, "Error");
-            console.log(err);
-        }
+        (err) => {this.toastr.error(err, "Error");console.log(err)}
     )
+
+
+    this.Notif_DelFile.asObservable().subscribe(elm =>
+      { this.onNotif_DelFile(elm)})
+
+    this.Notif_ToDelProduct.asObservable().subscribe(elm =>
+        { this.onNotif_ToDelProduct(elm)})
 }
 
 
@@ -74,16 +72,60 @@ submit() {
 // emppty stuff
 }
  
-deleteProduct()
+ 
+
+ _onBackProduct() {
+  this.router.navigate(['admin/products'])
+
+}
+ 
+ 
+
+ 
+_onDelfiles( ): void {
+    this.blockUIdropzone.start();
+    if(this.imagesProduct.length>0)
+    {
+        this.imagesProduct.forEach(elm =>
+        {
+          // delete image from firebase 
+          let upload:IFileDelReq={ folderName: elm.productId, fileName: elm.name,};
+          console.log(upload);
+          this.uploadService.del(upload)
+          .subscribe( resp=>{
+                    console.log(resp);
+                    if(resp.status)
+                    {
+                      this.toastr.success("delete file  :"+upload.fileName +" from directory : "+ upload.folderName, "Delete file");
+                      let image:IImageUrl ={name:elm.name, uuid:elm.uuid,productId:elm.productId};
+                      // notification to delete image from table imageUrl
+                      this.Notif_DelFile.next(image)
+                    }
+                    else
+                      this.toastr.error(" erro delete file  :"+upload.fileName +" from directory : "+ upload.folderName, "Delete file")
+            },
+            err=>{console.error(err) });
+           
+        })
+    }
+    else
+    {
+        this.Notif_ToDelProduct.next(this.data);
+    }
+}
+
+ 
+onNotif_ToDelProduct(p:IProduct)
 {
-  this.HttpProduct.Delete(this.data.uuid).subscribe( 
+  this.toastr.success("the product ID :"+ p.uuid  +" is successefly deleted ", "deleted product");
+  this.HttpProduct.Delete(p.uuid).subscribe( 
     res => {
               this.blockUIdropzone.stop();
-              this.toastr.success("Delete product ID :"+ this.data.uuid  +" success", "Delete product")
+              this.toastr.success("Delete product ID :"+ p.uuid  +" success", "Delete product")
               this.router.navigate(['admin/products'])  
           },
     err=> {
-             this.toastr.success("error Delete product ID :"+ this.data.uuid  +" Error", "Delete Error")
+             this.toastr.success("error Delete product ID :"+ p.uuid  +" Error", "Delete Error")
          },
     () =>{
       console.log('DONE!')  
@@ -91,103 +133,31 @@ deleteProduct()
     } 
     
     )
-
- }
-
- _onBackProduct() {
-  this.router.navigate(['admin/products'])
-  
-
-}
- 
-onDeleteClick( ): void {
-  try {
-    this.blockUIdropzone.start();
-    console.log(this.imagesProduct) ;
-    let cntImageDeleted=0; 
-    if(this.imagesProduct.length==0){
-      this.deleteProduct();
-    }
-    this.imagesProduct.forEach(elm => {
-         console.log("delete image uuid : "+ elm.uuid) ;
-          this.imgUrlService.Delete(elm.uuid).subscribe(
-            resp=>{
-              cntImageDeleted++; 
-              console.log(JSON.stringify(resp) );
-              if(cntImageDeleted===this.imagesProduct.length)
-              {
-                this.deleteProduct();
-              }
-
-            },
-            err=>{
-              cntImageDeleted++; 
-              if(cntImageDeleted===this.imagesProduct.length)
-              {
-                this.deleteProduct();
-              }
-              console.error(err) ;
-            }
-          )
-    })
-    
-    
-  }
-  catch (error) {
-    this.blockUIdropzone.stop();
-    console.error("catch "  +error);
-  }
-
 }
 
- 
-deleteImageFirebase( ): void {
- 
-    let cntImageDeleted=0; 
-    if(this.imagesProduct.length>0)
+CounterDeletedFile:number=0; 
+onNotif_DelFile(img:IImageUrl)
+{
+  console.log("delete image to table :" );
+  console.log(img );
+
+  this.imgUrlService.Delete(img.uuid).subscribe(
+    resp =>
     {
-        this.imagesProduct.forEach(elm =>
-        {
-            let  upload:IFileDelReq={
-              folderName: elm.productId,
-              fileName: elm.name,
-            }
-            console.log("delete image uuid : "+ elm.uuid) ;
-            this.uploadService.deleteFireBase(upload).subscribe
-            (
-            resp=>
-            {
-                if(resp.type ==  HttpEventType.Response)
-                {
-                    cntImageDeleted++; 
-                    let  respDel:IFileDelResp= resp.body as IFileDelResp; ;
-                    if(respDel.status)
-                    {
-                      this.toastr.success("delete file  :"+elm.name +" from directory : "+ elm.productId, "Delete file")
-                    }
-                    else
-                    {
-                      this.toastr.error(" erro delete file  :"+elm.name +" from directory : "+ elm.productId, "Delete file")
-                    }
-                    if(cntImageDeleted===this.imagesProduct.length)
-                    {
-                      this.deleteProduct();
-                    }
-                }
-            },
-            err=>{
-              cntImageDeleted++; 
-              if(cntImageDeleted===this.imagesProduct.length)
-              {
-                this.deleteProduct();
-              }
-              console.error(err) ;
-            });
-        })
+       console.log(resp)   ;
+      // this.blockUIdropzone.stop();
+      this.CounterDeletedFile++;
+      if(this.CounterDeletedFile ==  this.imagesProduct.length){
+        this.Notif_ToDelProduct.next(this.data);
+
+      }
+    },
+    err=>{
+      //this.blockUIdropzone.stop();
+      this.CounterDeletedFile++;
+       console.log(err)  
     }
+  )
 }
-
- 
-
 
 }
