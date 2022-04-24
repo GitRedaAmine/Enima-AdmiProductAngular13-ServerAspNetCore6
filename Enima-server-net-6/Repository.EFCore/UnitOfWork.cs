@@ -16,16 +16,18 @@ namespace Repository.EFCore
 
     public class UnitOfWork  : IUnitOfWork 
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
         public IBaseRepository<Product, Guid> Product { get; private set; }
         public IBaseRepository<Brand, Guid> Brand { get; private set; }
         public IBaseRepository<Categorie, Guid> Categorie { get; private set; }
         public IBaseRepository<ImageUrl, Guid> ImageUrl { get; private set; }
 
-        public IOnlyTestRepository OnlyTest  { get; private set; }
- 
-        public UnitOfWork(ApplicationDbContext context)
+        public IBaseRepository<User, Guid> User { get; private set; }
+        public IBaseRepository<RefreshToken, Guid> RefreshToken { get; private set; }
+
+
+        public UnitOfWork(AppDbContext context)
         {
             _context = context;
 
@@ -33,12 +35,13 @@ namespace Repository.EFCore
             Brand = new BaseRepository<Brand>(_context);
             Categorie = new BaseRepository<Categorie>(_context);
             ImageUrl = new BaseRepository<ImageUrl>(_context);
-           
 
-            OnlyTest  = new OnlyTestRepository(_context);
+
+            User = new BaseRepository<User>(_context);
+            RefreshToken = new BaseRepository<RefreshToken>(_context);
         }
 
-        public ApplicationDbContext context()
+        public AppDbContext context()
         {
             return _context;
         }

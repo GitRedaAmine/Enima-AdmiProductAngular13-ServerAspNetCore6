@@ -32,7 +32,7 @@ export interface IProduct
 export interface IFileStatusResp
 {
 
-     status:boolean  ,
+     success:boolean  ,
      msg:string  ,
 
 }

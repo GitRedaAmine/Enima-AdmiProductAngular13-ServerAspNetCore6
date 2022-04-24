@@ -12,9 +12,9 @@ namespace Repository.EFCore.Repositories
 {
     public class BaseRepository<T> : IBaseRepository<T,Guid> where T : class
     {
-        protected ApplicationDbContext _context;
+        protected AppDbContext _context;
 
-        public BaseRepository(ApplicationDbContext context)
+        public BaseRepository(AppDbContext context)
         {
             _context = context;
         }

@@ -22,6 +22,7 @@ using Firebase.Auth;
 using Firebase.Storage;
 using Enima_Api.Services;
 using Enima_Api.Models;
+using Enima_Api.Responses;
 
 namespace Enima_Api.Controllers
 {
@@ -50,8 +51,8 @@ namespace Enima_Api.Controllers
                 || model.folderName == string.Empty)
                 {
                     UploadResp respErr= new UploadResp();
-                    respErr.status = false;
-                    respErr.msg = "folderName is empty...";
+                    respErr.Success = false;
+                    respErr.Error = "folderName is empty...";
                     return Ok(respErr);
 
                 }
@@ -78,8 +79,8 @@ namespace Enima_Api.Controllers
                 || model.folderName == string.Empty)
                 {
                        
-                        respErr.status = false;
-                        respErr.msg = "folderName or filename is empty";
+                        respErr.Success = false;
+                        respErr.Error = "folderName or filename is empty";
                         return Ok(respErr);
 
                 }
@@ -93,8 +94,8 @@ namespace Enima_Api.Controllers
                 }
                 else
                 {
-                    respErr.status = false;
-                    respErr.msg = "error delete file " + model.fileName + " from directory " + model.folderName;
+                    respErr.Success = false;
+                    respErr.Error = "error delete file " + model.fileName + " from directory " + model.folderName;
                     return Ok(respErr);
                 }
 
@@ -120,13 +121,13 @@ namespace Enima_Api.Controllers
                 FileDelResp resp = new FileDelResp();
 
                  
-                resp.status = await _uploadService.DeleteFileAsync(model.folderName, model.fileName);
-                resp.msg =  "delete file ok";
+                resp.Success = await _uploadService.DeleteFileAsync(model.folderName, model.fileName);
+                resp.Error =  "delete file ok";
                
 
-                if ((bool)!resp.status)
+                if ((bool)!resp.Success)
                 {
-                    resp.msg = " Can not delete image name " + model.fileName + " from directory " + model.folderName + " check if the file exis ";
+                    resp.Error = " Can not delete image name " + model.fileName + " from directory " + model.folderName + " check if the file exis ";
                      
                 }
 

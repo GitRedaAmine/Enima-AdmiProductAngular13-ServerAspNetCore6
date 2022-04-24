@@ -1,4 +1,6 @@
- 
+
+
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repository.Core.Models
 {
@@ -6,8 +8,10 @@ namespace Repository.Core.Models
     {
         public string Name { get; set; }
         public string Description { get; set; }
-        public decimal Price { get; set; }
-        public decimal Rating { get; set; }
+ 
+        public int Price { get; set; }
+ 
+        public int Rating { get; set; }
         public int Stocks { get; set; }
 
         public ICollection<ImageUrl> ImageUrls { get; set; }

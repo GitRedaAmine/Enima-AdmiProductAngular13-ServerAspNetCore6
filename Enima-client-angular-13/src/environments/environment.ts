@@ -21,6 +21,7 @@ export const environment = {
     TableCategorie:"Categories",
     TableImageUrl:"ImageUrls",
     TableBrand:"Brands",
+ 
     
     Tablebasket:"shopingbasket",
     TableCode:"PurchaseCode",

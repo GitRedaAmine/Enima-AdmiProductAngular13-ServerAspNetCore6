@@ -17,6 +17,8 @@ import { MaterialModule } from './shared/modules/material/material.module';
  
  
 import { FormsModule } from '@angular/forms';
+import { AuthInterceptorProvider } from './interceptors/auth.interceptor';
+import { ErrorInterceptorProvider } from './interceptors/error.interceptor';
  
 @NgModule({
   declarations: [
@@ -42,7 +44,10 @@ import { FormsModule } from '@angular/forms';
       preventDuplicates: true,
   }),
   ],
-  providers: [],
+  providers: [
+    AuthInterceptorProvider,
+    ErrorInterceptorProvider
+  ],
   bootstrap: [AppComponent],
   schemas: [
     CUSTOM_ELEMENTS_SCHEMA // Tells Angular we will have custom tags in our templates

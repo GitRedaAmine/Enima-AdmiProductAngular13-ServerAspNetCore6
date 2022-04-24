@@ -1,16 +1,64 @@
+<mat-toolbar>
+  <button mat-icon-button class="example-icon" aria-label="Example icon-button with menu icon">
+   <mat-icon>menu</mat-icon>
+ </button>
+ <span     >{{title}}</span>
+ <span class="example-spacer"></span>
  
- <mat-toolbar    class="mat-elevation-z10">
-    <mat-toolbar-row>
-       
-      <span     >{{title}}</span>
-        <span class="example-spacer"></span> 
-         
-        <div    >
-              admin
+ 
+
+<div fxLayout="row"    *ngIf="!isLoggedIn"     >  
+  <div  class="div_margin" >
+      <button mat-raised-button color="accent" [routerLink]="['/account/login']"    fxFill   >Login</button>
+  </div>
+  <div  class="div_margin" >
+      <button mat-raised-button color="accent" [routerLink]="['/account/register']"  fxFill >register</button>
+  </div>
+</div>
+
+
+
+     <!--  menu profile -->
+<div   *ngIf="isLoggedIn"    >
+    <button mat-icon-button   [matMenuTriggerFor]="menu"   >
+        <div fxLayout="row" fxLayoutAlign="center center">
+          <mat-icon color="accent">more_vert</mat-icon>
+          <img   mat-card-avatar  class="resize"   src ="./../../../../../assets/profile.svg"/>
         </div>
-    </mat-toolbar-row>
-</mat-toolbar>
+    </button>
   
+    <mat-menu #menu="matMenu"  >
+      <button mat-menu-item  >
+        <mat-icon color="accent"> account_circle </mat-icon>
+        <span>{{ user.email }}</span>
+    </button> 
+      <br>
+      <mat-divider ></mat-divider>
+         
+ 
+      <mat-divider ></mat-divider>
+      <button mat-menu-item    [routerLink]="['/profile']" >
+          <mat-icon  color="accent"> playlist_add_check</mat-icon>  
+          <span>View Orders</span>
+      </button>
+      <mat-divider ></mat-divider>
+      <button mat-menu-item   (click)="logout()">
+        <mat-icon color="accent"> exit_to_app</mat-icon>Logout
+      </button> 
+      <mat-divider ></mat-divider>
+      <button mat-menu-item   >
+        <mat-icon color="accent"> style </mat-icon>theme
+      </button> 
+    </mat-menu>
+  </div>
+
+ 
+
+</mat-toolbar>
+
  <div>
   <router-outlet></router-outlet>
  </div>
+
+
+

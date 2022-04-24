@@ -18,6 +18,7 @@ import { BlockUIModule } from 'ng-block-ui';
 import { BrandsComponent } from '../shared/components/brands/brands.component';
 import { CategoriesComponent } from '../shared/components/categories/categories.component';
 import { EditComponent } from './components/products/page/edit/edit.component';
+import { UsersComponent } from './components/users/users.component';
 
 @NgModule({
   declarations: [
@@ -30,6 +31,7 @@ import { EditComponent } from './components/products/page/edit/edit.component';
     FilePickerDirective,
     BrandsComponent,
     CategoriesComponent,
+    UsersComponent,
    
   ],
   imports: [

@@ -18,10 +18,6 @@ namespace Repository.Core
         IBaseRepository<Categorie, Guid> Categorie { get; }
         IBaseRepository<ImageUrl, Guid> ImageUrl { get; }
 
-        IOnlyTestRepository OnlyTest { get; }
-
-
-    
 
         int Complete();
         Task<int> CompleteAsyn();

@@ -7,20 +7,37 @@ const  ProductServerUrl: string = PROD_Product_Server;
 
 
 export const environment = {
-  firebase: {
-    projectId: 'rtdb-5ec40',
-    appId: '1:815638552059:web:c49ad0b1bdf40f833ebf5e',
-    storageBucket: 'rtdb-5ec40.appspot.com',
-    locationId: 'us-central',
-    apiKey: 'AIzaSyA6jjvX7A6IBO2SV88I8lyG8490HUnztw0',
-    authDomain: 'rtdb-5ec40.firebaseapp.com',
-    messagingSenderId: '815638552059',
+  production: false,
+  apiBaseServer: {
+    Accounts: AccountServerUrl,
+    Products: ProductServerUrl,
   },
-  production: true,
-  api: {
-      BaseUrlAccounts: AccountServerUrl,
-      BaseUrlProducts: ProductServerUrl,
+  product: {
+    TableProduct:"Products",
+    TableCategorie:"Categories",
+    TableImageUrl:"ImageUrls",
+    TableBrand:"Brands",
+    
+    Tablebasket:"shopingbasket",
+    TableCode:"PurchaseCode",
+    TableCommune:"Commune",
+    TableWilaya:"Wilaya",
+  },
+
+  account: {
+    TableUsers:"users",
+
+  },
+ 
+
+
+
+
+
+  storage:
+  {
+     DirectoryImage:"Images/Products"
   }
-};
 
  
+};

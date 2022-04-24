@@ -1,0 +1,88 @@
+<div fxLayout="row" data-aos="zoom-in-down"  fxLayout.lt-sm="column"  fxLayoutAlign="center center"    style="height: 90vh; "   >
+  <div mat-elevation-z8 fxFlex="50" fxLayoutAlign.lt-sm="center center"  fxLayoutAlign="end center"   >
+    <div   >
+      <img src="assets/account/register.jpg" style="width:300px; height: 420px;"  > 
+      
+ </div>
+  </div>
+
+  <div  mat-elevation-z8 fxFlex  fxLayoutAlign.lt-sm="center center"    fxLayoutAlign="start center"   >
+  <mat-card   class="animate__animated animate__slideInLeft  animate__slow"    >
+    <mat-card-header>
+      <mat-card-title>Register</mat-card-title>
+    </mat-card-header>
+
+  
+
+      <mat-card-content   style="height: 450px;"   > 
+ 
+          <div   fxLayout="column" fxLayoutAlign="space-around center"    fxLayoutGap="20px"   > 
+  
+
+
+        <mat-form-field    [formGroup]="registerForm" >
+          <mat-label>Enter your email</mat-label>
+          <input matInput placeholder="pat@example.com"  formControlName="email" id="email" required>
+          <mat-icon matSuffix color="accent">alternate_email</mat-icon>
+          <mat-error *ngIf="hasError('email', 'required')">email is required</mat-error>
+          <mat-error *ngIf="hasError('email', 'email')">valide email is required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field    [formGroup]="registerForm" >
+          <mat-label>Enter your password</mat-label>
+          <input matInput placeholder="password"  [type]="hide ? 'password' : 'text'" formControlName="password" id="password" required>
+          <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
+            <mat-icon color="accent">{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
+          <mat-error *ngIf="hasError('password', 'required')">password is required</mat-error>  
+          <mat-error *ngIf="hasError('password', 'minLength')">min lenght 8 catacter  is required</mat-error>  
+        </mat-form-field>
+
+
+        <mat-form-field   [formGroup]="registerForm"  >
+          <mat-label>confirme your password</mat-label>
+          <input matInput placeholder="confirmPassword"  [type]="hide ? 'password' : 'text'" formControlName="confirmPassword" id="confirmPassword" required>
+          <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide confirmPassword'" [attr.aria-pressed]="hide">
+            <mat-icon color="accent">{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
+          <mat-error *ngIf="hasError('confirmPassword', 'required')">confirmPassword is required</mat-error>  
+          <mat-error *ngIf="hasError('confirmPassword', 'minLength')">min lenght 8 catacter  is required</mat-error>  
+        </mat-form-field>
+
+
+        <mat-form-field   [formGroup]="registerForm"  >
+          <mat-label>Enter your   name</mat-label>
+          <input matInput placeholder="firstName"  formControlName="firstName" id="firstName" required>
+          <mat-icon matSuffix color="accent">account_circle</mat-icon>
+          <mat-error *ngIf="hasError('firstName', 'required')">firstName is required</mat-error>
+          <mat-error *ngIf="hasError('firstName', 'minLength')">min lenght 8 catacter  is required</mat-error>
+        </mat-form-field> 
+
+        <mat-form-field    [formGroup]="registerForm" >
+          <mat-label>Enter your   lastName</mat-label>
+          <input matInput placeholder="lastName"  formControlName="lastName" id="lastName" required>
+          <mat-icon matSuffix color="accent">account_circle</mat-icon>
+          <mat-error *ngIf="hasError('lastName', 'required')">firstName is required</mat-error>
+          <mat-error *ngIf="hasError('lastName', 'minLength')">min lenght 8 catacter  is required</mat-error>
+        </mat-form-field> 
+        
+ 
+        <div   fxLayoutAlign="space-around center"    fxFlexFill >
+                    
+          <button   *ngIf="!loading"   [disabled]="loading"  style="min-width: 120px;"  (click)="SubmitRegister()"    
+                                      mat-raised-button 
+                                      color="accent" >Register 
+                                      
+                                  </button>
+          <mat-spinner *ngIf="loading"   color="accent"  [diameter]="30"></mat-spinner>
+      </div>
+         </div>
+ 
+      
+  
+      </mat-card-content>
+ 
+  
+  </mat-card>
+</div>
+</div>
